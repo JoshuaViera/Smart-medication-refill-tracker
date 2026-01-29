@@ -1,35 +1,5 @@
-const medications = [
-  {
-    id: 1,
-    name: "Atorvastatin",
-    dosage: "20mg",
-    schedule: ["08:00"],
-    stock: 12,
-    refillThreshold: 10,
-    expiresOn: "2026-02-15",
-    lastTaken: "2026-01-27T08:15:00",
-  },
-  {
-    id: 2,
-    name: "Metformin",
-    dosage: "500mg",
-    schedule: ["08:00", "20:00"],
-    stock: 4,
-    refillThreshold: 8,
-    expiresOn: "2026-03-20",
-    lastTaken: "2026-01-27T20:00:00",
-  },
-  {
-    id: 3,
-    name: "Lisinopril",
-    dosage: "10mg",
-    schedule: ["09:00"],
-    stock: 22,
-    refillThreshold: 7,
-    expiresOn: "2026-01-30",
-    lastTaken: "2026-01-27T09:05:00",
-  },
-];
+// Initialize empty medications array - will be loaded from Supabase
+let medications = [];
 
 const filters = document.querySelectorAll("[data-filter]");
 const medList = document.getElementById("medList");
@@ -40,6 +10,65 @@ const nextDoseHint = document.getElementById("nextDoseHint");
 const pendingDoseValue = document.getElementById("pendingDoseValue");
 const lowInventoryValue = document.getElementById("lowInventoryValue");
 const expiringValue = document.getElementById("expiringValue");
+
+// Load medications from Supabase
+async function loadMedications() {
+  try {
+    const { data, error } = await supabase
+      .from('medications')
+      .select('*')
+      .order('id');
+    
+    if (error) throw error;
+    
+    // Transform database format to match existing code
+    medications = data.map(med => ({
+      id: med.id,
+      name: med.name,
+      dosage: med.dosage,
+      schedule: med.schedule, // Already an array from JSONB
+      stock: med.stock,
+      refillThreshold: med.refill_threshold,
+      expiresOn: med.expires_on,
+      lastTaken: med.last_taken
+    }));
+    
+    render();
+  } catch (error) {
+    console.error('Error loading medications:', error);
+    medList.innerHTML = `<p class="hint">Error loading medications. Please refresh.</p>`;
+  }
+}
+
+// Helper function to update last taken timestamp
+async function updateLastTaken(medicationId) {
+  try {
+    const { error } = await supabase
+      .from('medications')
+      .update({ last_taken: new Date().toISOString() })
+      .eq('id', medicationId);
+    
+    if (error) throw error;
+    await loadMedications(); // Reload data
+  } catch (error) {
+    console.error('Error updating medication:', error);
+  }
+}
+
+// Helper function to update stock
+async function updateStock(medicationId, newStock) {
+  try {
+    const { error } = await supabase
+      .from('medications')
+      .update({ stock: newStock })
+      .eq('id', medicationId);
+    
+    if (error) throw error;
+    await loadMedications(); // Reload data
+  } catch (error) {
+    console.error('Error updating stock:', error);
+  }
+}
 
 document.getElementById("toggleText").addEventListener("click", () => {
   document.body.classList.toggle("large-text");
@@ -246,4 +275,5 @@ function render(filter = "all") {
   renderReminders(now);
 }
 
-render();
+// Initialize app by loading medications from Supabase
+loadMedications();
