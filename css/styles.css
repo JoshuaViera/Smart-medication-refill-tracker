@@ -1,0 +1,281 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  color-scheme: light;
+  --bg: #f6f7fb;
+  --surface: #ffffff;
+  --text: #1c1f2a;
+  --muted: #5c6376;
+  --border: #e4e7ee;
+  --green: #24a148;
+  --yellow: #f1c21b;
+  --red: #da1e28;
+  --primary: #0f62fe;
+  --primary-dark: #0043ce;
+}
+
+body {
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+body.large-text {
+  font-size: 18px;
+}
+
+.app-shell {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+h1 {
+  font-size: 36px;
+  line-height: 1.1;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: var(--muted);
+  max-width: 540px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-secondary {
+  background: white;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.dashboard {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-subtitle {
+  color: var(--muted);
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: 1px solid var(--border);
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.chip.is-active {
+  background: #edf3ff;
+  border-color: #d0e2ff;
+  color: var(--primary);
+}
+
+.med-list,
+.reminders {
+  display: grid;
+  gap: 12px;
+}
+
+.med-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.med-title {
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.med-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.status-pill {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-green {
+  background: #d4f4dd;
+  color: var(--green);
+}
+
+.status-yellow {
+  background: #fff2c2;
+  color: #8a6a00;
+}
+
+.status-red {
+  background: #ffd7d9;
+  color: var(--red);
+}
+
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin: 0 4px;
+}
+
+.status-dot.green {
+  background: var(--green);
+}
+
+.status-dot.yellow {
+  background: var(--yellow);
+}
+
+.status-dot.red {
+  background: var(--red);
+}
+
+.reminder-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+
+.reminder-card strong {
+  font-size: 16px;
+}
+
+.app-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  h1 {
+    font-size: 30px;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .med-card {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+}

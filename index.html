@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Smart Medication & Refill Tracker</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Smart Medication & Refill Tracker</p>
+          <h1>Stay on track, every dose.</h1>
+          <p class="subtitle">
+            A zero-search dashboard with clear, color-coded status.
+          </p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="toggleText">
+            Toggle Large Text
+          </button>
+          <button class="btn btn-primary" id="addMedication">
+            Add Medication
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="dashboard">
+          <div class="card">
+            <p class="label">Next Dose</p>
+            <p class="value" id="nextDoseValue">--</p>
+            <p class="hint" id="nextDoseHint">--</p>
+          </div>
+          <div class="card">
+            <p class="label">Pending Doses</p>
+            <p class="value" id="pendingDoseValue">--</p>
+            <p class="hint">Within current time window</p>
+          </div>
+          <div class="card">
+            <p class="label">Low Inventory</p>
+            <p class="value" id="lowInventoryValue">--</p>
+            <p class="hint">Refill soon</p>
+          </div>
+          <div class="card">
+            <p class="label">Rx Expiring</p>
+            <p class="value" id="expiringValue">--</p>
+            <p class="hint">Within 30 days</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Medication Status</h2>
+            <div class="filter-group" role="group" aria-label="Filter">
+              <button class="chip is-active" data-filter="all">All</button>
+              <button class="chip" data-filter="pending">Due Now</button>
+              <button class="chip" data-filter="missed">Missed</button>
+              <button class="chip" data-filter="low">Low Stock</button>
+              <button class="chip" data-filter="expiring">Expiring</button>
+            </div>
+          </div>
+          <div class="med-list" id="medList"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2>Upcoming Reminders</h2>
+            <p class="panel-subtitle">Next 24 hours</p>
+          </div>
+          <div class="reminders" id="reminders"></div>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <p>
+          Status colors: <span class="status-dot green"></span> Green = clear,
+          <span class="status-dot yellow"></span> Yellow = pending,
+          <span class="status-dot red"></span> Red = urgent.
+        </p>
+      </footer>
+    </div>
+
+    <script src="./js/app.js"></script>
+  </body>
+</html>
