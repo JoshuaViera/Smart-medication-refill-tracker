@@ -74,8 +74,225 @@ document.getElementById("toggleText").addEventListener("click", () => {
   document.body.classList.toggle("large-text");
 });
 
-document.getElementById("addMedication").addEventListener("click", () => {
-  alert("This is a placeholder for the add flow.");
+const addMedModal = document.getElementById("addMedModal");
+const addMedForm = document.getElementById("addMedForm");
+const closeAddMedBtn = document.getElementById("closeAddMed");
+const cancelAddMedBtn = document.getElementById("cancelAddMed");
+
+function openAddMedModal() {
+  addMedModal.classList.add("is-open");
+  addMedModal.setAttribute("aria-hidden", "false");
+  document.getElementById("barcodeHint").textContent = "";
+  document.getElementById("medBarcode").value = "";
+  document.getElementById("medName").focus();
+}
+
+// Normalize barcode for NDC search (digits only, then try 5-4-2 format)
+function normalizeNDC(value) {
+  const digits = (value || "").replace(/\D/g, "");
+  if (digits.length === 10) return `${digits.slice(0, 5)}-${digits.slice(5, 9)}-${digits.slice(9)}`;
+  if (digits.length === 11) return `${digits.slice(0, 5)}-${digits.slice(5, 9)}-${digits.slice(9)}`;
+  return value.replace(/\s/g, "").trim();
+}
+
+async function lookupNDC(barcode) {
+  const hintEl = document.getElementById("barcodeHint");
+  hintEl.textContent = "Looking up…";
+  hintEl.style.color = "var(--muted)";
+
+  const normalized = normalizeNDC(barcode);
+  const searchTerms = [normalized];
+  const digitsOnly = (barcode || "").replace(/\D/g, "");
+  if (digitsOnly.length >= 10) {
+    const d = digitsOnly.slice(0, 11);
+    if (d.length === 10) searchTerms.push(`${d.slice(0, 5)}-${d.slice(5, 9)}-${d.slice(9)}`);
+    else if (d.length === 11) searchTerms.push(`${d.slice(0, 5)}-${d.slice(5, 9)}-${d.slice(9)}`);
+  }
+
+  for (const term of searchTerms) {
+    try {
+      const res = await fetch(
+        `https://api.fda.gov/drug/ndc.json?search=product_ndc:"${encodeURIComponent(term)}"&limit=1`
+      );
+      const data = await res.json();
+      if (data.error) continue;
+      const result = data.results && data.results[0];
+      if (!result) continue;
+
+      const name = result.brand_name || result.generic_name || result.openfda?.brand_name?.[0] || "Unknown";
+      const dosageForm = result.dosage_form || result.openfda?.dosage_form?.[0] || "";
+      document.getElementById("medName").value = name;
+      document.getElementById("medDosage").value = dosageForm ? `${dosageForm}` : document.getElementById("medDosage").value || "";
+      hintEl.textContent = "Medication found. Complete the rest and save.";
+      hintEl.style.color = "var(--green)";
+      document.getElementById("medName").focus();
+      return;
+    } catch (e) {
+      console.warn("NDC lookup failed for", term, e);
+    }
+  }
+
+  hintEl.textContent = "No medication found for this barcode. Enter details manually.";
+  hintEl.style.color = "var(--muted)";
+}
+
+function closeAddMedModal() {
+  stopScanCamera();
+  addMedModal.classList.remove("is-open");
+  addMedModal.setAttribute("aria-hidden", "true");
+  addMedForm.reset();
+}
+
+document.getElementById("addMedication").addEventListener("click", openAddMedModal);
+
+const medBarcodeInput = document.getElementById("medBarcode");
+const barcodeLookupBtn = document.getElementById("barcodeLookup");
+const scanWithCameraBtn = document.getElementById("scanWithCamera");
+const scanOverlay = document.getElementById("scanOverlay");
+const scanVideo = document.getElementById("scanVideo");
+const scanStatus = document.getElementById("scanStatus");
+const cancelScanBtn = document.getElementById("cancelScan");
+
+barcodeLookupBtn.addEventListener("click", () => {
+  const v = medBarcodeInput.value.trim();
+  if (v) lookupNDC(v);
+});
+
+medBarcodeInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const v = medBarcodeInput.value.trim();
+    if (v) lookupNDC(v);
+  }
+});
+
+let scanStream = null;
+let scanAnimationId = null;
+
+function stopScanCamera() {
+  if (scanStream) {
+    scanStream.getTracks().forEach((t) => t.stop());
+    scanStream = null;
+  }
+  if (scanAnimationId) cancelAnimationFrame(scanAnimationId);
+  scanOverlay.classList.remove("is-open");
+  scanOverlay.setAttribute("aria-hidden", "true");
+  scanVideo.srcObject = null;
+}
+
+async function startCameraScan() {
+  if (!("BarcodeDetector" in window)) {
+    document.getElementById("barcodeHint").textContent =
+      "Camera scanning isn't available in this browser. Click in the box above and use a handheld scanner, or type the barcode and click Look up.";
+    document.getElementById("barcodeHint").style.color = "var(--muted)";
+    medBarcodeInput.focus();
+    return;
+  }
+
+  scanOverlay.classList.add("is-open");
+  scanOverlay.setAttribute("aria-hidden", "false");
+  scanStatus.textContent = "Starting camera…";
+
+  try {
+    scanStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment", width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    scanVideo.srcObject = scanStream;
+    scanVideo.onloadedmetadata = () => scanVideo.play();
+  } catch (err) {
+    scanStatus.textContent = "Camera access denied or unavailable.";
+    console.error(err);
+    stopScanCamera();
+    return;
+  }
+
+  const barcodeDetector = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "codabar"] });
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+
+  scanStatus.textContent = "Point at the barcode on the medicine container…";
+
+  function detectFrame() {
+    if (!scanStream || !scanVideo.videoWidth) {
+      scanAnimationId = requestAnimationFrame(detectFrame);
+      return;
+    }
+    canvas.width = scanVideo.videoWidth;
+    canvas.height = scanVideo.videoHeight;
+    ctx.drawImage(scanVideo, 0, 0);
+    barcodeDetector
+      .detect(canvas)
+      .then((codes) => {
+        if (codes.length > 0 && codes[0].rawValue) {
+          const raw = codes[0].rawValue;
+          stopScanCamera();
+          medBarcodeInput.value = raw;
+          lookupNDC(raw);
+        }
+      })
+      .catch(() => {});
+    scanAnimationId = requestAnimationFrame(detectFrame);
+  }
+  detectFrame();
+}
+
+scanWithCameraBtn.addEventListener("click", startCameraScan);
+cancelScanBtn.addEventListener("click", stopScanCamera);
+
+closeAddMedBtn.addEventListener("click", closeAddMedModal);
+cancelAddMedBtn.addEventListener("click", closeAddMedModal);
+
+addMedModal.addEventListener("click", (e) => {
+  if (e.target === addMedModal) {
+    stopScanCamera();
+    closeAddMedModal();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    if (scanOverlay.classList.contains("is-open")) stopScanCamera();
+    else if (addMedModal.classList.contains("is-open")) closeAddMedModal();
+  }
+});
+
+addMedForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = document.getElementById("medName").value.trim();
+  const dosage = document.getElementById("medDosage").value.trim();
+  const scheduleInput = document.getElementById("medSchedule").value.trim();
+  const stock = parseInt(document.getElementById("medStock").value, 10);
+  const refillThreshold = parseInt(document.getElementById("medRefillThreshold").value, 10);
+  const expiresOn = document.getElementById("medExpiresOn").value;
+
+  const schedule = scheduleInput
+    .split(",")
+    .map((t) => t.trim())
+    .filter((t) => /^\d{1,2}:\d{2}$/.test(t));
+
+  if (!schedule.length) {
+    alert("Please enter at least one valid dose time (e.g. 08:00 or 8:00).");
+    return;
+  }
+
+  try {
+    const { error } = await supabase.from("medications").insert({
+      name,
+      dosage,
+      schedule,
+      stock,
+      refill_threshold: refillThreshold,
+      expires_on: expiresOn,
+      last_taken: null
+    });
+
+    if (error) throw error;
+    closeAddMedModal();
+    await loadMedications();
+  } catch (err) {
+    console.error("Error adding medication:", err);
+    alert("Could not add medication. Check the console or your Supabase setup.");
+  }
 });
 
 filters.forEach((chip) => {
