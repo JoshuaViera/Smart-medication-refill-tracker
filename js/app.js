@@ -11,6 +11,20 @@ const pendingDoseValue = document.getElementById("pendingDoseValue");
 const lowInventoryValue = document.getElementById("lowInventoryValue");
 const expiringValue = document.getElementById("expiringValue");
 
+// P1: Success feedback toast (PRD – ease of use for elderly)
+function showToast(message) {
+  const container = document.getElementById("toastContainer");
+  if (!container) return;
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.setAttribute("role", "status");
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.remove();
+  }, 2800);
+}
+
 // Load medications from Supabase (no errors when Supabase is not configured)
 async function loadMedications() {
   if (!window.supabase || typeof window.supabase.from !== 'function') {
@@ -58,7 +72,8 @@ async function updateLastTaken(medicationId) {
       .eq('id', medicationId);
     
     if (error) throw error;
-    await loadMedications(); // Reload data
+    await loadMedications();
+    showToast("Recorded");
   } catch (error) {
     console.error('Error updating medication:', error);
   }
@@ -73,6 +88,7 @@ async function updateStock(medicationId, newStock) {
 
   if (error) throw error;
   await loadMedications();
+  showToast("Stock updated");
 }
 
 // Helper function to update medication (edit)
@@ -94,6 +110,7 @@ async function updateMedication(medicationId, data) {
 
     if (error) throw error;
     await loadMedications();
+    showToast("Saved");
   } catch (error) {
     console.error('Error updating medication:', error);
     throw error;
@@ -110,6 +127,7 @@ async function deleteMedication(medicationId) {
 
     if (error) throw error;
     await loadMedications();
+    showToast("Medication removed");
   } catch (error) {
     console.error('Error deleting medication:', error);
     throw error;
@@ -129,12 +147,12 @@ function getHighVisibility() {
 function setHighVisibility(on) {
   localStorage.setItem(HIGH_VISIBILITY_KEY, on ? "true" : "false");
   document.body.classList.toggle("high-visibility", on);
-  if (highVisibilityLabelEl) highVisibilityLabelEl.textContent = on ? "Compact view" : "High visibility";
+  if (highVisibilityLabelEl) highVisibilityLabelEl.textContent = on ? "Compact view" : "Large text & buttons";
 }
 
 function updateHighVisibilityLabel() {
   const on = document.body.classList.contains("high-visibility");
-  if (highVisibilityLabelEl) highVisibilityLabelEl.textContent = on ? "Compact view" : "High visibility";
+  if (highVisibilityLabelEl) highVisibilityLabelEl.textContent = on ? "Compact view" : "Large text & buttons";
 }
 
 if (toggleHighVisibilityBtn) {
@@ -587,6 +605,7 @@ addMedForm.addEventListener("submit", async (e) => {
       if (error) throw error;
       closeAddMedModal();
       await loadMedications();
+      showToast("Medication added");
     }
   } catch (err) {
     console.error(editingMedId ? "Error updating medication:" : "Error adding medication:", err);
@@ -726,7 +745,16 @@ function renderMedications(filter, now) {
   });
 
   if (!filtered.length) {
-    medList.innerHTML = `<p class="hint">No medications match this filter.</p>`;
+    if (medications.length === 0) {
+      medList.innerHTML = `
+        <div class="empty-state" aria-live="polite">
+          <p class="empty-state-title">No medications yet</p>
+          <p class="empty-state-hint">Add your first medication to start tracking doses and refills.</p>
+          <button type="button" class="btn btn-primary empty-state-cta" data-empty-state-add>Add your first medication</button>
+        </div>`;
+    } else {
+      medList.innerHTML = `<p class="hint">No medications match this filter.</p>`;
+    }
     return;
   }
 
@@ -749,10 +777,15 @@ function renderMedications(filter, now) {
               <span>Expires: ${formatDate(new Date(med.expiresOn))}</span>
             </div>
             <div class="med-card-actions">
-              <button type="button" class="btn btn-small btn-secondary" data-edit-med data-med-id="${med.id}">Edit</button>
-              <button type="button" class="btn btn-small btn-secondary" data-update-stock data-med-id="${med.id}">Update stock</button>
               <button type="button" class="btn btn-small btn-primary" data-mark-taken data-med-id="${med.id}">Mark as taken</button>
-              <button type="button" class="btn btn-small btn-delete" data-delete-med data-med-id="${med.id}">Delete</button>
+              <div class="med-card-more">
+                <button type="button" class="btn btn-small btn-secondary" data-more-menu aria-haspopup="true" aria-expanded="false">More</button>
+                <div class="med-card-dropdown" role="menu" hidden>
+                  <button type="button" class="med-card-dropdown-item" role="menuitem" data-edit-med data-med-id="${med.id}">Edit</button>
+                  <button type="button" class="med-card-dropdown-item" role="menuitem" data-update-stock data-med-id="${med.id}">Update stock</button>
+                  <button type="button" class="med-card-dropdown-item med-card-dropdown-item--danger" role="menuitem" data-delete-med data-med-id="${med.id}">Delete</button>
+                </div>
+              </div>
             </div>
             </div>
           </div>
@@ -765,8 +798,44 @@ function renderMedications(filter, now) {
     .join("");
 }
 
-// Event delegation: handle "Mark as taken" and "Edit" on medication cards
+// P2: Close all "More" dropdowns
+function closeAllMedCardDropdowns() {
+  document.querySelectorAll(".med-card-more.is-open").forEach((el) => {
+    el.classList.remove("is-open");
+    const dd = el.querySelector(".med-card-dropdown");
+    if (dd) dd.hidden = true;
+  });
+  document.querySelectorAll("[data-more-menu][aria-expanded='true']").forEach((btn) => btn.setAttribute("aria-expanded", "false"));
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".med-card-more")) closeAllMedCardDropdowns();
+});
+
+// Event delegation: empty state CTA
+medList.addEventListener("click", (e) => {
+  if (e.target.closest("[data-empty-state-add]")) {
+    openAddMedModal();
+    return;
+  }
+});
+
+// Event delegation: handle Mark as taken, More menu, Edit, Update stock, Delete
 medList.addEventListener("click", async (e) => {
+  const moreBtn = e.target.closest("[data-more-menu]");
+  if (moreBtn) {
+    e.stopPropagation();
+    const moreEl = moreBtn.closest(".med-card-more");
+    const isOpen = moreEl && moreEl.classList.contains("is-open");
+    closeAllMedCardDropdowns();
+    if (!isOpen && moreEl) {
+      moreEl.classList.add("is-open");
+      const dd = moreEl.querySelector(".med-card-dropdown");
+      if (dd) dd.hidden = false;
+      moreBtn.setAttribute("aria-expanded", "true");
+    }
+    return;
+  }
   const markBtn = e.target.closest("[data-mark-taken]");
   if (markBtn) {
     const id = markBtn.dataset.medId;
@@ -780,6 +849,7 @@ medList.addEventListener("click", async (e) => {
   }
   const editBtn = e.target.closest("[data-edit-med]");
   if (editBtn) {
+    closeAllMedCardDropdowns();
     const id = editBtn.dataset.medId;
     if (!id) return;
     const med = medications.find((m) => String(m.id) === String(id));
@@ -788,6 +858,7 @@ medList.addEventListener("click", async (e) => {
   }
   const updateStockBtn = e.target.closest("[data-update-stock]");
   if (updateStockBtn) {
+    closeAllMedCardDropdowns();
     const id = updateStockBtn.dataset.medId;
     if (!id) return;
     const med = medications.find((m) => String(m.id) === String(id));
@@ -796,6 +867,7 @@ medList.addEventListener("click", async (e) => {
   }
   const deleteBtn = e.target.closest("[data-delete-med]");
   if (deleteBtn) {
+    closeAllMedCardDropdowns();
     const id = deleteBtn.dataset.medId;
     if (!id) return;
     const med = medications.find((m) => String(m.id) === String(id));

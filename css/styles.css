@@ -252,6 +252,26 @@ h1 {
   gap: 8px;
 }
 
+/* P1: Next dose as hero – vital information first (PRD zero-search dashboard) */
+.card--hero {
+  grid-column: 1 / -1;
+  padding: 20px 20px 18px;
+  background: linear-gradient(135deg, #edf3ff 0%, var(--surface) 100%);
+  border-color: #d0e2ff;
+}
+
+.card--hero .value {
+  font-size: 32px;
+}
+
+.card--hero .hint {
+  font-size: 15px;
+}
+
+body.high-visibility .card--hero .value {
+  font-size: 36px;
+}
+
 .label {
   font-size: 13px;
   color: var(--muted);
@@ -313,10 +333,52 @@ h1 {
   color: var(--primary);
 }
 
+/* P3: Mobile touch targets – 44px minimum (PRD: oversized buttons / touch) */
+@media (max-width: 600px) {
+  .btn {
+    min-height: 44px;
+    padding: 12px 20px;
+  }
+  .chip {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+  .med-card-actions .btn-small {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+}
+
 .med-list,
 .reminders {
   display: grid;
   gap: 12px;
+}
+
+/* P2: Empty state – No medications yet + CTA */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+}
+.empty-state-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+.empty-state-hint {
+  color: var(--muted);
+  font-size: 15px;
+  margin-bottom: 20px;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.empty-state-cta {
+  min-height: 48px;
+  padding: 14px 24px;
 }
 
 .med-card {
@@ -360,6 +422,50 @@ h1 {
 
 .med-card-actions {
   margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+/* P2: More menu – group Edit / Update stock / Delete (PRD: reduce cognitive load) */
+.med-card-more {
+  position: relative;
+}
+
+.med-card-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  min-width: 140px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  padding: 6px 0;
+  z-index: 50;
+}
+
+.med-card-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: 0;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.med-card-dropdown-item:hover {
+  background: var(--bg);
+}
+
+.med-card-dropdown-item--danger {
+  color: var(--red);
 }
 
 .btn-small {
@@ -599,6 +705,23 @@ h1 {
   min-height: 1.2em;
 }
 
+/* P2: Image prominent in add flow */
+.form-field--prominent {
+  margin: 16px 0;
+  padding: 14px;
+  background: #f0f4ff;
+  border-radius: 10px;
+  border: 1px solid #d0e2ff;
+}
+.form-field--prominent .hint {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+.label-optional {
+  font-weight: 400;
+  color: var(--muted);
+}
+
 .form-divider {
   border: 0;
   border-top: 1px solid var(--border);
@@ -652,6 +775,41 @@ h1 {
   font-size: 14px;
   color: var(--muted);
   margin: 0;
+}
+
+/* P1: Success feedback toast */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 12px 20px;
+  background: var(--text);
+  color: var(--surface);
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  animation: toast-in 0.25s ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 720px) {

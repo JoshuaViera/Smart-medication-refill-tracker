@@ -20,7 +20,7 @@
           </p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-secondary" id="toggleHighVisibility" title="High visibility: large print and oversized buttons">
+          <button class="btn btn-secondary" id="toggleHighVisibility" title="Toggle large text and oversized buttons">
             <span id="highVisibilityLabel">Compact view</span>
           </button>
           <button class="btn btn-secondary" id="enableReminders">
@@ -36,7 +36,7 @@
 
       <main>
         <section class="dashboard">
-          <div class="card">
+          <div class="card card--hero" aria-label="Next dose - most important">
             <p class="label">Next Dose</p>
             <p class="value" id="nextDoseValue">--</p>
             <p class="hint" id="nextDoseHint">--</p>
@@ -80,6 +80,8 @@
           <div class="reminders" id="reminders"></div>
         </section>
       </main>
+
+      <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
       <footer class="app-footer">
         <p>
@@ -155,6 +157,12 @@
           <label for="medDosage">Dosage</label>
           <input type="text" id="medDosage" name="dosage" required placeholder="e.g. 10 mg" />
 
+          <div class="form-field--prominent" aria-describedby="medImageUrlHint">
+            <label for="medImageUrl">Image URL <span class="label-optional">(optional)</span></label>
+            <input type="url" id="medImageUrl" name="imageUrl" placeholder="https://… Paste a link to a photo of the medication" />
+            <p class="hint" id="medImageUrlHint">Add a photo URL so you can recognize your medication at a glance on the dashboard.</p>
+          </div>
+
           <label for="medSchedule">Dose times (24h, comma-separated)</label>
           <input type="text" id="medSchedule" name="schedule" required placeholder="e.g. 08:00, 14:00, 20:00" />
 
@@ -166,9 +174,6 @@
 
           <label for="medExpiresOn">Expires on</label>
           <input type="date" id="medExpiresOn" name="expiresOn" required />
-
-          <label for="medImageUrl">Image URL (optional)</label>
-          <input type="url" id="medImageUrl" name="imageUrl" placeholder="https://…" />
 
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" id="cancelAddMed">Cancel</button>
