@@ -1,0 +1,27 @@
+---
+description: Pair role – driver focuses on UI/UX; prioritize layout, accessibility, and interaction
+alwaysApply: true
+---
+
+# UI/UX Focus (Pair Role)
+
+The driver in this project focuses on **UI/UX**. When working on this codebase:
+
+## Prioritize
+
+- **Layout and visual hierarchy**: Clear structure, spacing, and grouping (e.g. dashboard cards, medication list, reminder banner).
+- **Accessibility**: Labels, focus order, ARIA where helpful, high-visibility mode, touch targets (see PRD: large print, oversized buttons).
+- **Interaction**: Button placement, feedback (loading states, success/error), modals and flows that feel clear and low-friction.
+- **Consistency**: Reuse existing patterns (e.g. `.btn`, `.card`, `.modal`) and tokens (`--primary`, `--muted`, etc.) from `css/styles.css`.
+
+## Where to change things
+
+- **Structure and semantics**: `index.html` – sections, headings, buttons, form labels, landmark roles.
+- **Look and feel**: `css/styles.css` – layout, typography, colors, spacing, responsive behavior.
+- **Behavior that affects UX**: `js/app.js` – when to show/hide UI, focus management, copy and error messages.
+
+## When suggesting or implementing
+
+- Prefer changes in HTML/CSS for purely visual or structural improvements; only touch JS when interaction or state is involved.
+- Call out accessibility or usability impacts (e.g. contrast, tap targets, keyboard/escape).
+- Keep the PRD in mind: zero-search dashboard, color-coded status, low-friction input, high-visibility option.

@@ -6,6 +6,15 @@
 
 ---
 
+## 🛠 Supabase setup (required for Add Medication / data)
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. In **Project Settings → API**, copy the **Project URL** and **anon public** key.
+3. Copy `js/config.example.js` to `js/config.js` and paste your URL and anon key.
+4. In the Supabase dashboard, open **SQL Editor**, create a **New query**, paste the contents of `supabase-schema.sql`, and run it. This creates the `medications` table and allows the app to read/write.
+
+---
+
 ## 📖 Overview
 **Product Vision:** To eliminate the mental burden of medication management by creating a seamless safety tool that ensures no medication doses are missed.
 
